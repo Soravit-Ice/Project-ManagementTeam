@@ -291,3 +291,86 @@ export async function getProfile(userId) {
   }
   return sanitizeUser(user);
 }
+
+function buildResetExpiry() {
+  const date = new Date();
+  date.setMinutes(date.getMinutes() + env.RESET_TOKEN_TTL_MINUTES);
+  return date;
+}
+
+export async function requestPasswordReset({ email }) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  // Always return success to prevent user enumeration
+  if (!user) {
+    return { ok: true };
+  }
+
+  // Invalidate previous pending resets
+  await prisma.passwordReset.updateMany({
+    where: { userId: user.id, used: false },
+    data: { used: true },
+  });
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashToken(rawToken);
+
+  await prisma.passwordReset.create({
+    data: {
+      userId: user.id,
+      tokenHash,
+      expiresAt: buildResetExpiry(),
+    },
+  });
+
+  const resetUrl = `${env.APP_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(
+    normalizedEmail
+  )}`;
+
+  const html = await renderEmailTemplate('reset-password', {
+    subject: 'รีเซ็ตรหัสผ่านของคุณ',
+    name: user.name || user.email,
+    resetUrl,
+    appName: APP_NAME,
+    expiresMinutes: env.RESET_TOKEN_TTL_MINUTES,
+  });
+  const text = `หากคุณร้องขอรีเซ็ตรหัสผ่านสำหรับ ${APP_NAME} ให้คลิกลิงก์นี้: ${resetUrl} (ลิงก์หมดอายุใน ${env.RESET_TOKEN_TTL_MINUTES} นาที)`;
+
+  await sendMail({
+    to: user.email,
+    subject: `[${APP_NAME}] ลิงก์รีเซ็ตรหัสผ่าน`,
+    html,
+    text,
+  });
+
+  return { ok: true };
+}
+
+export async function resetPassword({ email, token, password }) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (!user) {
+    throw new AppError('ลิงก์ไม่ถูกต้องหรือหมดอายุ', { status: 400, code: 'RESET_INVALID' });
+  }
+
+  const tokenHash = hashToken(token);
+  const record = await prisma.passwordReset.findUnique({ where: { tokenHash } });
+
+  if (!record || record.userId !== user.id || record.used || record.expiresAt < new Date()) {
+    if (record && record.expiresAt < new Date() && !record.used) {
+      await prisma.passwordReset.update({ where: { tokenHash }, data: { used: true } });
+    }
+    throw new AppError('ลิงก์ไม่ถูกต้องหรือหมดอายุ', { status: 400, code: 'RESET_INVALID' });
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: user.id }, data: { passwordHash } }),
+    prisma.passwordReset.update({ where: { tokenHash }, data: { used: true } }),
+    prisma.refreshToken.updateMany({ where: { userId: user.id, revoked: false }, data: { revoked: true } }),
+  ]);
+
+  resetLoginAttempts(normalizedEmail);
+  return { ok: true };
+}

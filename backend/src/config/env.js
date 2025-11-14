@@ -20,6 +20,7 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(7),
   OTP_TTL_MINUTES: z.coerce.number().default(10),
   OTP_COOLDOWN_SECONDS: z.coerce.number().default(60),
+  RESET_TOKEN_TTL_MINUTES: z.coerce.number().default(60),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().default(5),
 });

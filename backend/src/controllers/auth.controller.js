@@ -7,6 +7,8 @@ import {
   logoutUser,
   refreshSession,
   getProfile,
+  requestPasswordReset,
+  resetPassword,
 } from '../services/auth.service.js';
 import { AppError } from '../utils/errors.js';
 
@@ -28,6 +30,22 @@ const loginSchema = z.object({
 
 const resendSchema = z.object({
   email: z.string().email(),
+});
+
+const forgotSchema = z.object({
+  email: z.string().email(),
+});
+
+const resetSchema = z.object({
+  email: z.string().email(),
+  token: z.string().min(10),
+  password: z
+    .string()
+    .min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+    .regex(/[A-Z]/, 'ต้องมีตัวอักษรภาษาอังกฤษพิมพ์ใหญ่')
+    .regex(/[a-z]/, 'ต้องมีตัวอักษรภาษาอังกฤษพิมพ์เล็ก')
+    .regex(/[0-9]/, 'ต้องมีตัวเลขอย่างน้อย 1 ตัว')
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, 'ต้องมีอักขระพิเศษอย่างน้อย 1 ตัว'),
 });
 
 export async function registerController(req, res) {
@@ -73,4 +91,16 @@ export async function meController(req, res) {
   }
   const user = await getProfile(req.user.id);
   return res.json({ data: { user } });
+}
+
+export async function forgotPasswordController(req, res) {
+  const payload = forgotSchema.parse(req.body);
+  await requestPasswordReset(payload);
+  return res.json({ data: { ok: true }, message: 'หากอีเมลอยู่ในระบบ เราได้ส่งลิงก์รีเซ็ตแล้ว' });
+}
+
+export async function resetPasswordController(req, res) {
+  const payload = resetSchema.parse(req.body);
+  await resetPassword(payload);
+  return res.json({ data: { ok: true }, message: 'รีเซ็ตรหัสผ่านสำเร็จ' });
 }

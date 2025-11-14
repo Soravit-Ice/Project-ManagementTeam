@@ -5,13 +5,31 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import userRoutes from './routes/user.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 
 const app = express();
 
+// More tolerant CORS in dev: accept localhost and 127.0.0.1 variants
+function buildAllowedOrigins() {
+  const allowed = new Set([env.APP_URL]);
+  try {
+    const u = new URL(env.APP_URL);
+    if (u.hostname === 'localhost') {
+      allowed.add(`${u.protocol}//127.0.0.1${u.port ? `:${u.port}` : ''}`);
+    }
+    if (u.hostname === '127.0.0.1') {
+      allowed.add(`${u.protocol}//localhost${u.port ? `:${u.port}` : ''}`);
+    }
+  } catch {}
+  return Array.from(allowed);
+}
+
+const allowedOrigins = buildAllowedOrigins();
+
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = [env.APP_URL];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -38,6 +56,8 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/user', userRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

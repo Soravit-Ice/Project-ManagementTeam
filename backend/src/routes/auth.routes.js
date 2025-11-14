@@ -9,6 +9,8 @@ import {
   logoutController,
   refreshController,
   meController,
+  forgotPasswordController,
+  resetPasswordController,
 } from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { env } from '../config/env.js';
@@ -35,5 +37,7 @@ router.post('/login', strictLimiter, asyncHandler(loginController));
 router.post('/logout', asyncHandler(logoutController));
 router.post('/refresh', asyncHandler(refreshController));
 router.get('/me', authenticate, asyncHandler(meController));
+router.post('/forgot-password', strictLimiter, asyncHandler(forgotPasswordController));
+router.post('/reset-password', strictLimiter, asyncHandler(resetPasswordController));
 
 export default router;
