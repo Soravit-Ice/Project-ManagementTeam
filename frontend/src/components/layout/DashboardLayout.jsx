@@ -6,12 +6,14 @@ import { useToast } from '../ui/Toast.jsx';
 
 const navItems = [
   { label: 'ภาพรวม', to: '/dashboard' },
+  { label: 'โปรเจกต์ของฉัน', to: '/dashboard/my-projects' },
   { label: 'ตั้งค่าบัญชี', to: '/dashboard/settings' },
   { label: 'ความปลอดภัย', to: '/dashboard/security' },
 ];
 
 export default function DashboardLayout() {
   const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.accountType === 'ADMINISTRATOR';
   const clearSession = useAuthStore((state) => state.clearSession);
   const { notify } = useToast();
 
@@ -55,6 +57,15 @@ export default function DashboardLayout() {
                   {item.label}
                 </NavLink>
               ))}
+              
+              {isAdmin && (
+                <NavLink
+                  to="/admin"
+                  className="block rounded-xl px-4 py-3 text-sm font-medium transition bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 border border-purple-400/30"
+                >
+                  🔐 Admin Panel
+                </NavLink>
+              )}
             </nav>
 
             <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-200/80">

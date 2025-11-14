@@ -31,3 +31,19 @@ export const verifyEmailSchema = z.object({
 export const resendOtpSchema = z.object({
   email: z.string().email('อีเมลไม่ถูกต้อง'),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('อีเมลไม่ถูกต้อง'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    email: z.string().email('อีเมลไม่ถูกต้อง'),
+    token: z.string().min(10, 'ลิงก์ไม่ถูกต้อง'),
+    password: passwordPolicy,
+    confirmPassword: z.string().min(1, 'กรุณายืนยันรหัสผ่าน'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'รหัสผ่านยืนยันไม่ตรงกัน',
+    path: ['confirmPassword'],
+  });

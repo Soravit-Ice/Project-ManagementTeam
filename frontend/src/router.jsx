@@ -10,12 +10,19 @@ import {
 
 import RegisterPage from './pages/Register.jsx';
 import VerifyEmailPage from './pages/VerifyEmail.jsx';
+import ForgotPasswordPage from './pages/ForgotPassword.jsx';
+import ResetPasswordPage from './pages/ResetPassword.jsx';
 import LoginPage from './pages/Login.jsx';
 import NotFoundPage from './pages/NotFound.jsx';
 import OverviewPage from './pages/dashboard/Overview.jsx';
 import SettingsPage from './pages/dashboard/Settings.jsx';
 import SecurityPage from './pages/dashboard/Security.jsx';
+import MyProjects from './pages/dashboard/MyProjects.jsx';
 import DashboardLayout from './components/layout/DashboardLayout.jsx';
+import AdminLayout from './components/layout/AdminLayout.jsx';
+import AdminHome from './pages/admin/AdminHome.jsx';
+import UserManagement from './pages/admin/UserManagement.jsx';
+import ProjectManagement from './pages/admin/ProjectManagement.jsx';
 import { GuestRoute, ProtectedRoute } from './components/layout/ProtectedRoute.jsx';
 
 // Nice error fallback for route errors
@@ -59,6 +66,8 @@ const router = createBrowserRouter([
           { index: true, element: <Navigate to="login" replace /> },
           { path: 'register', element: <RegisterPage /> },
           { path: 'verify-email', element: <VerifyEmailPage /> },
+          { path: 'forgot-password', element: <ForgotPasswordPage /> },
+          { path: 'reset-password', element: <ResetPasswordPage /> },
           { path: 'login', element: <LoginPage /> },
         ],
       },
@@ -71,8 +80,18 @@ const router = createBrowserRouter([
             element: <DashboardLayout />,
             children: [
               { index: true, element: <OverviewPage /> },
+              { path: 'my-projects', element: <MyProjects /> },
               { path: 'settings', element: <SettingsPage /> },
               { path: 'security', element: <SecurityPage /> },
+            ],
+          },
+          {
+            path: 'admin',
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <AdminHome /> },
+              { path: 'users', element: <UserManagement /> },
+              { path: 'projects', element: <ProjectManagement /> },
             ],
           },
         ],

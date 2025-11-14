@@ -83,6 +83,11 @@ export default function LoginPage() {
               {showPassword ? 'ซ่อน' : 'แสดง'}
             </button>
           </div>
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-xs text-sky-300 hover:underline">
+              ลืมรหัสผ่าน?
+            </Link>
+          </div>
         </div>
         <Button type="submit" className="w-full" loading={submitting}>
           เข้าสู่ระบบ
