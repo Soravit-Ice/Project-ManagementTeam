@@ -1,45 +1,59 @@
-import nodemailer from 'nodemailer';
+import Mailjet from 'node-mailjet';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/errors.js';
 
-let transporter;
+let mailjetClient;
 
 export function getTransporter() {
-  if (transporter) return transporter;
-  transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    auth: env.SMTP_USER
-      ? {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASS,
-      }
-      : undefined,
-    tls: {
-    rejectUnauthorized: true // ตรวจสอบความถูกต้องของ Certificate
-  },
-    secure: env.SMTP_PORT === 465,
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  });
-  return transporter;
+  if (mailjetClient) return mailjetClient;
+
+  mailjetClient = Mailjet.apiConnect(env.SMTP_USER, env.SMTP_PASS);
+
+  return mailjetClient;
 }
 
 export async function sendMail({ to, subject, html, text }) {
-  const tx = getTransporter();
+  const mj = getTransporter();
+
+  // Parse MAIL_FROM which might look like "Project Management Team <teedevofficial@gmail.com>"
+  let fromEmail = env.MAIL_FROM;
+  let fromName = 'Project Management Team';
+
+  if (env.MAIL_FROM) {
+    const fromMatch = env.MAIL_FROM.match(/^(.*?)?\s*<(.*?)>$/);
+    if (fromMatch) {
+      fromName = fromMatch[1].trim() || 'Project Management Team';
+      fromEmail = fromMatch[2].trim();
+    }
+  }
+
   try {
-    const result = await tx.sendMail({
-      from: env.MAIL_FROM,
-      to,
-      subject,
-      html,
-      text,
-    });
-    return result;
+    const request = await mj
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: fromEmail,
+              Name: fromName
+            },
+            To: [
+              {
+                Email: to,
+                Name: to
+              }
+            ],
+            Subject: subject,
+            TextPart: text,
+            HTMLPart: html
+          }
+        ]
+      });
+
+    return request.body;
   } catch (error) {
     console.error(`[Mailer] Error sending email to ${to}:`, error.message || error);
-    throw new AppError('ระบบไม่สามารถส่งอีเมลได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง (Connection timeout/Error)', {
+    throw new AppError('ระบบไม่สามารถส่งอีเมลได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง (Mailjet API Error)', {
       status: 503,
       code: 'EMAIL_SEND_FAILED'
     });
