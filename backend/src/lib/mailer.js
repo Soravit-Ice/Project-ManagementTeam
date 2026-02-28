@@ -15,6 +15,9 @@ export function getTransporter() {
         pass: env.SMTP_PASS,
       }
       : undefined,
+    tls: {
+    rejectUnauthorized: true // ตรวจสอบความถูกต้องของ Certificate
+  },
     secure: env.SMTP_PORT === 465,
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 10000,
