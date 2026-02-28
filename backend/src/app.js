@@ -11,30 +11,10 @@ import { errorHandler, notFoundHandler } from './middleware/error.js';
 
 const app = express();
 
-// More tolerant CORS in dev: accept localhost and 127.0.0.1 variants
-function buildAllowedOrigins() {
-  const allowed = new Set([env.APP_URL]);
-  try {
-    const u = new URL(env.APP_URL);
-    if (u.hostname === 'localhost') {
-      allowed.add(`${u.protocol}//127.0.0.1${u.port ? `:${u.port}` : ''}`);
-    }
-    if (u.hostname === '127.0.0.1') {
-      allowed.add(`${u.protocol}//localhost${u.port ? `:${u.port}` : ''}`);
-    }
-  } catch {}
-  return Array.from(allowed);
-}
-
-const allowedOrigins = buildAllowedOrigins();
-
+// Allow all domains
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    callback(null, true);
   },
   credentials: true,
 };
