@@ -14,7 +14,7 @@ const app = express();
 // Allow all domains
 const corsOptions = {
   origin: (origin, callback) => {
-    callback(null, true);
+    callback(null, true); 
   },
   credentials: true,
 };

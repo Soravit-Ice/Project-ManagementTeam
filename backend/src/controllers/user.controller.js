@@ -33,6 +33,7 @@ export const getMyProjectsController = async (req, res) => {
   const completedProjects = assignments.filter((a) => a.project.status === 'EXPIRED');
   const lockedProjects = assignments.filter((a) => a.project.status === 'LOCKED');
 
+
   res.json({
     data: {
       assignments,

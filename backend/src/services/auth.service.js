@@ -221,7 +221,6 @@ export async function loginUser({ email, password, res }) {
   }
 
   resetLoginAttempts(normalizedEmail);
-
   const accessToken = signAccessToken({ sub: user.id, email: user.email });
   await createRefreshSession(user.id, res);
 
